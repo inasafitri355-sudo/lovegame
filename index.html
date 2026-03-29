@@ -1,149 +1,225 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Love App 💖</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Game Multiplayer 💖</title>
+    <style>
+        :root { --pink: #ff4d88; --bg: #fad0c4; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#ff9a9e, var(--bg)); min-height: 100vh; display: flex; justify-content: center; overflow-x: hidden; }
+        .app { max-width: 420px; width: 100%; padding: 15px; box-sizing: border-box; text-align: center; }
+        
+        /* Board Styles */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+        .box { height: 70px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: rgba(255,255,255,0.4); border: 3px solid white; transition: all 0.3s; position: relative; }
+        .fun { border-color: #ffb347; } .deep { border-color: #6a89cc; }
+        .future { border-color: #78e08f; } .challenge { border-color: #e55039; }
+        
+        /* Card & UI */
+        .card { background: white; padding: 20px; border-radius: 20px; margin: 15px 0; box-shadow: 0 8px 16px rgba(0,0,0,0.1); min-height: 60px; font-weight: bold; color: #444; display: flex; align-items: center; justify-content: center; }
+        button, input, select { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 12px; font-size: 16px; outline: none; transition: 0.2s; }
+        button { background: var(--pink); color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #d43d70; }
+        button:active { transform: translateY(3px); box-shadow: none; }
+        button:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
 
-<style>
-body{margin:0;font-family:sans-serif;background:linear-gradient(135deg,#ff9a9e,#fad0c4);}
-.app{max-width:420px;margin:auto;padding:10px;}
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
-.box{height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;}
-.fun{background:#ffb347;} .deep{background:#6a89cc;}
-.future{background:#78e08f;} .challenge{background:#e55039;}
-.card{background:white;padding:20px;border-radius:15px;margin-top:10px;text-align:center;}
-button,input,select{width:100%;padding:10px;margin-top:6px;border:none;border-radius:10px;}
-button{background:#ff4d88;color:white;}
-.chat{background:white;height:120px;overflow:auto;border-radius:10px;padding:10px;}
-</style>
+        /* Chat Styles */
+        .chat-container { background: white; border-radius: 15px; margin-top: 15px; padding: 10px; }
+        .chat { height: 120px; overflow-y: auto; text-align: left; font-size: 14px; margin-bottom: 5px; padding: 5px; }
+        .msg-row { margin-bottom: 5px; padding: 5px 8px; border-radius: 8px; }
+        .new-msg-anim { animation: highlight 1.5s ease-out; }
+        @keyframes highlight { from { background: #ffebf2; } to { background: transparent; } }
+
+        /* Animations */
+        @keyframes shake { 0% {transform:rotate(0)} 25% {transform:rotate(5deg)} 75% {transform:rotate(-5deg)} 100% {transform:rotate(0)} }
+        .dice-rolling { animation: shake 0.1s infinite; background: #ffd700 !important; color: black !important; }
+        
+        .heart-pop { position: fixed; pointer-events: none; font-size: 20px; animation: floatUp 1s forwards; z-index: 100; }
+        @keyframes floatUp { from { transform: translateY(0) scale(1); opacity: 1; } to { transform: translateY(-100px) scale(1.5); opacity: 0; } }
+        
+        #score { font-size: 20px; font-weight: bold; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); margin: 10px 0; }
+    </style>
 </head>
-
 <body>
+
 <div class="app">
+    <!-- Setup Screen -->
+    <div id="setup">
+        <h2 style="color:white; text-shadow: 2px 2px var(--pink);">Lover's Board 💖</h2>
+        <input id="roomInput" placeholder="Kode Room (Contoh: LDR2024)">
+        <select id="playerInput">
+            <option value="p1">👤 Player 1 (Aku)</option>
+            <option value="p2">❤️ Player 2 (Dia)</option>
+        </select>
+        <button onclick="initGame()">MASUK PERMAINAN</button>
+    </div>
 
-<input id="room" placeholder="Kode Room">
-<button onclick="joinRoom()">Join Room</button>
-
-<select id="player">
-<option value="p1">Kamu</option>
-<option value="p2">Dia</option>
-</select>
-<button onclick="setPlayer()">Masuk</button>
-
-<div class="board" id="board"></div>
-
-<div class="card" id="card">Roll dulu 🎲</div>
-<button onclick="rollDice()">Roll Dice</button>
-
-<div id="score">Skor: 0 - 0</div>
-
-<div class="chat" id="chat"></div>
-<input id="msg">
-<button onclick="send()">Kirim</button>
-
+    <!-- Main Game Area -->
+    <div id="gameArea" style="display:none;">
+        <div id="score">Skor: 0 - 0</div>
+        <div class="board" id="board"></div>
+        <div class="card" id="card">Siap bermain? Klik Roll! 🎲</div>
+        <button id="rollBtn" onclick="rollDice()">ROLL DICE 🎲</button>
+        
+        <div class="chat-container">
+            <div class="chat" id="chat"></div>
+            <div style="display: flex; gap: 5px;">
+                <input id="msg" placeholder="Kirim pesan..." style="margin:0; font-size: 14px;">
+                <button onclick="sendMsg()" style="width: 70px; margin:0; padding: 5px;">Kirim</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com"></script>
+<script src="https://www.gstatic.com"></script>
 
+<script>
+// --- KONFIGURASI FIREBASE ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDy7sqCBGhtjcsITuT4hafOkL31bqM7OAs",
-  authDomain: "lovegame-c55b0.firebaseapp.com",
-  projectId: "lovegame-c55b0",
-  storageBucket: "lovegame-c55b0.firebasestorage.app",
-  messagingSenderId: "330187220059",
-  appId: "1:330187220059:web:c8cfa1447114a4a63d8b7e",
-  measurementId: "G-WHYM1BBQXC"
+    apiKey: "AIzaSyDy7sqCBGhtjcsITuT4hafOkL31bqM7OAs",
+    authDomain: "lovegame-c55b0.firebaseapp.com",
+    projectId: "lovegame-c55b0",
+    storageBucket: "lovegame-c55b0.firebasestorage.app",
+    databaseURL: "https://lovegame-c55b0-default-rtdb.firebaseio.com",
+    messagingSenderId: "330187220059",
+    appId: "1:330187220059:web:c8cfa1447114a4a63d8b7e"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+const db = firebase.database();
 
-let room="",player="";
-let pos1=0,pos2=0,turn=true,s1=0,s2=0;
+let roomID = "", myID = "";
+let pos1 = 0, pos2 = 0, turn = "p1", s1 = 0, s2 = 0;
+const types = ["fun", "deep", "future", "challenge", "fun", "deep", "future", "challenge", "fun", "deep", "future", "challenge"];
+const questions = {
+    fun: "Apa hal kecil yang aku lakuin tapi bikin kamu seneng banget?",
+    deep: "Kapan terakhir kali kamu merasa bangga banget punya aku?",
+    future: "Sebutin 1 tempat yang wajib kita datengin bareng tahun depan!",
+    challenge: "Coba kirim foto selfie lucu sekarang ke chat!"
+};
 
-let types=["fun","deep","future","challenge","fun","deep","future","challenge","fun","deep","future","challenge"];
+function initGame() {
+    roomID = document.getElementById("roomInput").value.trim();
+    myID = document.getElementById("playerInput").value;
+    if (!roomID) return alert("Masukkan kode room dulu!");
 
-function setPlayer(){
-player=document.getElementById("player").value;
+    document.getElementById("setup").style.display = "none";
+    document.getElementById("gameArea").style.display = "block";
+
+    // Listen Data Game
+    db.ref("rooms/" + roomID).on("value", snap => {
+        const d = snap.val();
+        if (d) {
+            // Cek jika skor bertambah untuk efek party
+            if(d.s1 > s1 || d.s2 > s2) createHeartParty();
+            
+            pos1 = d.pos1 || 0;
+            pos2 = d.pos2 || 0;
+            turn = d.turn || "p1";
+            s1 = d.s1 || 0;
+            s2 = d.s2 || 0;
+            updateUI();
+        } else {
+            db.ref("rooms/" + roomID).set({ pos1:0, pos2:0, turn:"p1", s1:0, s2:0 });
+        }
+    });
+
+    // Listen Chat
+    db.ref("chat/" + roomID).limitToLast(15).on("child_added", snap => {
+        const m = snap.val();
+        const chatBox = document.getElementById("chat");
+        const isMe = m.p === myID;
+        chatBox.innerHTML += `<div class="msg-row ${!isMe ? 'new-msg-anim' : ''}">
+            <b style="color:${isMe ? '#ff4d88' : '#6a89cc'}">${isMe ? 'Me' : 'Love'}</b>: ${m.txt}
+        </div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
 }
 
-function joinRoom(){
-room=document.getElementById("room").value;
-
-db.ref("rooms/"+room).on("value",snap=>{
-let d=snap.val();
-if(!d)return;
-
-pos1=d.pos1||0;
-pos2=d.pos2||0;
-turn=d.turn??true;
-s1=d.s1||0;
-s2=d.s2||0;
-
-updateBoard();
-document.getElementById("score").innerText="Skor: "+s1+" - "+s2;
-});
+function updateUI() {
+    document.getElementById("score").innerText = `Skor: ${s1} - ${s2}`;
+    const b = document.getElementById("board");
+    b.innerHTML = "";
+    for (let i = 0; i < 12; i++) {
+        let div = document.createElement("div");
+        div.className = "box " + types[i];
+        if (i === pos1) div.innerHTML += "👤";
+        if (i === pos2) div.innerHTML += "❤️";
+        b.appendChild(div);
+    }
+    const btn = document.getElementById("rollBtn");
+    btn.disabled = (myID !== turn);
+    btn.innerText = (myID === turn) ? "GILIRAN KAMU! 🎲" : "GILIRAN DIA... ⏳";
 }
 
-function sync(){
-db.ref("rooms/"+room).set({pos1,pos2,turn,s1,s2});
+function rollDice() {
+    const btn = document.getElementById("rollBtn");
+    const card = document.getElementById("card");
+    btn.disabled = true;
+    btn.classList.add("dice-rolling");
+
+    let count = 0;
+    let anim = setInterval(() => {
+        card.innerText = "🎲 " + (Math.floor(Math.random() * 6) + 1);
+        count++;
+        if (count > 10) {
+            clearInterval(anim);
+            btn.classList.remove("dice-rolling");
+            let dice = Math.floor(Math.random() * 6) + 1;
+            card.innerText = "🎲 HASIL: " + dice;
+            setTimeout(() => moveStep(dice), 600);
+        }
+    }, 100);
 }
 
-function rollDice(){
-if((player=="p1"&&!turn)||(player=="p2"&&turn)){
-alert("Bukan giliran kamu 😆");
-return;
+function moveStep(steps) {
+    let currentSteps = 0;
+    let moveInterval = setInterval(() => {
+        if (turn === "p1") pos1 = (pos1 + 1) % 12;
+        else pos2 = (pos2 + 1) % 12;
+        updateUI();
+        currentSteps++;
+
+        if (currentSteps >= steps) {
+            clearInterval(moveInterval);
+            finishMove();
+        }
+    }, 300);
 }
 
-let dice=Math.floor(Math.random()*6)+1;
-let steps=0;
-
-let i=setInterval(()=>{
-if(turn)pos1=(pos1+1)%12;
-else pos2=(pos2+1)%12;
-
-updateBoard();
-steps++;
-
-if(steps>=dice){
-clearInterval(i);
-turn=!turn;
-if(!turn)s1++;else s2++;
-sync();
-}
-},200);
+function finishMove() {
+    const currentPos = (turn === "p1") ? pos1 : pos2;
+    document.getElementById("card").innerText = "✨ " + questions[types[currentPos]];
+    
+    db.ref("rooms/" + roomID).update({
+        pos1: pos1, pos2: pos2,
+        turn: (turn === "p1" ? "p2" : "p1"),
+        s1: (turn === "p1" ? s1 + 1 : s1),
+        s2: (turn === "p2" ? s2 + 1 : s2)
+    });
 }
 
-function updateBoard(){
-let b=document.getElementById("board");
-b.innerHTML="";
-for(let i=0;i<12;i++){
-let div=document.createElement("div");
-div.className="box "+types[i];
-if(i==pos1)div.innerHTML="👤";
-if(i==pos2)div.innerHTML+="❤️";
-b.appendChild(div);
-}
+function sendMsg() {
+    const inp = document.getElementById("msg");
+    if (!inp.value.trim()) return;
+    db.ref("chat/" + roomID).push({ p: myID, txt: inp.value });
+    inp.value = "";
 }
 
-function send(){
-let m=document.getElementById("msg").value;
-if(!m)return;
-
-db.ref("chat/"+room).push({msg:m,player:player});
-document.getElementById("msg").value="";
+function createHeartParty() {
+    for(let i=0; i<15; i++) {
+        setTimeout(() => {
+            const heart = document.createElement("div");
+            heart.className = "heart-pop";
+            heart.innerHTML = "💖";
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.top = "80vh";
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 1000);
+        }, i * 100);
+    }
 }
-
-db.ref("chat").on("child_added",snap=>{
-let d=snap.val();
-document.getElementById("chat").innerHTML+="<div>"+d.player+": "+d.msg+"</div>";
-});
-
-updateBoard();
 </script>
-
 </body>
 </html>
