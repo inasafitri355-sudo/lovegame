@@ -6,217 +6,143 @@
 <title>Love App 💖</title>
 
 <style>
-body {
-    margin: 0;
-    font-family: -apple-system, sans-serif;
-    background: linear-gradient(180deg,#ff9a9e,#fad0c4);
-    height: 100vh;
-    overflow: hidden;
-}
-
-.app {
-    max-width: 400px;
-    margin: auto;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    color: white;
-}
-
-.header {
-    text-align: center;
-    padding: 20px;
-    font-size: 18px;
-}
-
-.card-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-}
-
-.card {
-    width: 85%;
-    height: 280px;
-    background: rgba(255,255,255,0.95);
-    color: #333;
-    border-radius: 25px;
-    padding: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-size: 18px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    transition: 0.4s;
-}
-
-.footer {
-    padding: 20px;
-}
-
-input, button {
-    width: 100%;
-    padding: 12px;
-    margin: 5px 0;
-    border-radius: 15px;
-    border: none;
-}
-
-button {
-    background: #ff4d88;
-    color: white;
-    font-size: 16px;
-}
-
-/* 💕 HEART ANIMATION */
-.heart {
-    position: absolute;
-    font-size: 30px;
-    animation: float 1s ease-out forwards;
-}
-
-@keyframes float {
-    0% {transform: translateY(0) scale(1); opacity: 1;}
-    100% {transform: translateY(-150px) scale(1.5); opacity: 0;}
-}
+body{margin:0;font-family:sans-serif;background:linear-gradient(135deg,#ff9a9e,#fad0c4);}
+.app{max-width:420px;margin:auto;padding:10px;}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+.box{height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;}
+.fun{background:#ffb347;} .deep{background:#6a89cc;}
+.future{background:#78e08f;} .challenge{background:#e55039;}
+.card{background:white;padding:20px;border-radius:15px;margin-top:10px;text-align:center;}
+button,input,select{width:100%;padding:10px;margin-top:6px;border:none;border-radius:10px;}
+button{background:#ff4d88;color:white;}
+.chat{background:white;height:120px;overflow:auto;border-radius:10px;padding:10px;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 
-<div class="header" id="header">💖 Love App 💖</div>
+<input id="room" placeholder="Kode Room">
+<button onclick="joinRoom()">Join Room</button>
 
-<div class="card-container" id="container">
-<div class="card" id="card">Tap / Swipe 💌</div>
-</div>
+<select id="player">
+<option value="p1">Kamu</option>
+<option value="p2">Dia</option>
+</select>
+<button onclick="setPlayer()">Masuk</button>
 
-<div class="footer">
-<input id="you" placeholder="Nama kamu">
-<input id="dia" placeholder="Nama dia">
-<button onclick="start()">Mulai</button>
-<button onclick="toggleMusic()">🎵 Music</button>
-</div>
+<div class="board" id="board"></div>
 
-<!-- 🎵 MUSIC -->
-<audio id="bgm" loop>
-<source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b9d7b.mp3">
-</audio>
+<div class="card" id="card">Roll dulu 🎲</div>
+<button onclick="rollDice()">Roll Dice</button>
 
-<!-- 🔊 SOUND EFFECT -->
-<audio id="sfx">
-<source src="https://cdn.pixabay.com/audio/2022/03/10/audio_0a3f6b9d0f.mp3">
-</audio>
+<div id="score">Skor: 0 - 0</div>
+
+<div class="chat" id="chat"></div>
+<input id="msg">
+<button onclick="send()">Kirim</button>
 
 </div>
 
-<script>
-let turn = true;
-let started = false;
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-let questions = [
-"Apa hal yang paling kamu suka dari aku?",
-"Kapan kamu paling kangen aku?",
-"Gimana masa depan kita?",
-"Apa yang bikin kamu bertahan sama aku?",
-"Apa mimpi kita bareng?",
-"Apa yang bikin kamu takut kehilangan aku?",
-"Deskripsikan aku dalam 1 kata",
-"Apa yang kamu harapkan dari hubungan ini?"
-];
+const firebaseConfig = {
+  apiKey: "AIzaSyDy7sqCBGhtjcsITuT4hafOkL31bqM7OAs",
+  authDomain: "lovegame-c55b0.firebaseapp.com",
+  projectId: "lovegame-c55b0",
+  storageBucket: "lovegame-c55b0.firebasestorage.app",
+  messagingSenderId: "330187220059",
+  appId: "1:330187220059:web:c8cfa1447114a4a63d8b7e",
+  measurementId: "G-WHYM1BBQXC"
+};
 
-function start(){
-let y=document.getElementById("you").value;
-let d=document.getElementById("dia").value;
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
-if(!y||!d){
-alert("Isi nama dulu 😆");
+let room="",player="";
+let pos1=0,pos2=0,turn=true,s1=0,s2=0;
+
+let types=["fun","deep","future","challenge","fun","deep","future","challenge","fun","deep","future","challenge"];
+
+function setPlayer(){
+player=document.getElementById("player").value;
+}
+
+function joinRoom(){
+room=document.getElementById("room").value;
+
+db.ref("rooms/"+room).on("value",snap=>{
+let d=snap.val();
+if(!d)return;
+
+pos1=d.pos1||0;
+pos2=d.pos2||0;
+turn=d.turn??true;
+s1=d.s1||0;
+s2=d.s2||0;
+
+updateBoard();
+document.getElementById("score").innerText="Skor: "+s1+" - "+s2;
+});
+}
+
+function sync(){
+db.ref("rooms/"+room).set({pos1,pos2,turn,s1,s2});
+}
+
+function rollDice(){
+if((player=="p1"&&!turn)||(player=="p2"&&turn)){
+alert("Bukan giliran kamu 😆");
 return;
 }
 
-localStorage.setItem("names",JSON.stringify({y,d}));
-started=true;
+let dice=Math.floor(Math.random()*6)+1;
+let steps=0;
 
-// autoplay fix (user interaction)
-document.getElementById("bgm").play().catch(()=>{});
+let i=setInterval(()=>{
+if(turn)pos1=(pos1+1)%12;
+else pos2=(pos2+1)%12;
 
-next();
-}
+updateBoard();
+steps++;
 
-function next(){
-if(!started)return;
-
-let n=JSON.parse(localStorage.getItem("names"));
-let name=turn?n.y:n.d;
-
-document.getElementById("header").innerText="Giliran: "+name;
-
-let random=Math.floor(Math.random()*questions.length);
-
-let card=document.getElementById("card");
-card.style.transform="scale(0.8)";
-card.style.opacity="0";
-
-setTimeout(()=>{
-card.innerText=questions[random];
-card.style.transform="scale(1)";
-card.style.opacity="1";
-},200);
-
-// 🔊 SOUND
-let sfx=document.getElementById("sfx");
-sfx.currentTime=0;
-sfx.play();
-
-createHearts();
-
+if(steps>=dice){
+clearInterval(i);
 turn=!turn;
+if(!turn)s1++;else s2++;
+sync();
+}
+},200);
 }
 
-// 💕 HEART EFFECT
-function createHearts(){
-let container=document.getElementById("container");
-
-for(let i=0;i<6;i++){
-let heart=document.createElement("div");
-heart.className="heart";
-heart.innerText="💖";
-
-heart.style.left=Math.random()*80+"%";
-
-container.appendChild(heart);
-
-setTimeout(()=>heart.remove(),1000);
+function updateBoard(){
+let b=document.getElementById("board");
+b.innerHTML="";
+for(let i=0;i<12;i++){
+let div=document.createElement("div");
+div.className="box "+types[i];
+if(i==pos1)div.innerHTML="👤";
+if(i==pos2)div.innerHTML+="❤️";
+b.appendChild(div);
 }
 }
 
-// TAP
-document.getElementById("card").addEventListener("click", next);
+function send(){
+let m=document.getElementById("msg").value;
+if(!m)return;
 
-// SWIPE
-let startX=0;
-document.getElementById("card").addEventListener("touchstart", e=>{
-startX=e.touches[0].clientX;
+db.ref("chat/"+room).push({msg:m,player:player});
+document.getElementById("msg").value="";
+}
+
+db.ref("chat").on("child_added",snap=>{
+let d=snap.val();
+document.getElementById("chat").innerHTML+="<div>"+d.player+": "+d.msg+"</div>";
 });
 
-document.getElementById("card").addEventListener("touchend", e=>{
-let endX=e.changedTouches[0].clientX;
-
-if(Math.abs(endX-startX)>50){
-next();
-}
-});
-
-function toggleMusic(){
-let m=document.getElementById("bgm");
-if(m.paused)m.play();
-else m.pause();
-}
+updateBoard();
 </script>
 
 </body>
