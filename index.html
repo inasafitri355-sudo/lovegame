@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Love Game MAX 💖</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #ff6a88, #ff99ac);
+    margin: 0;
+    padding: 20px;
+    text-align: center;
+    color: white;
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+}
+
+input, select, button {
+    width: 90%;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 12px;
+    border: none;
+}
+
+button {
+    background: #ff4d88;
+    color: white;
+}
+
+.card {
+    margin: 20px auto;
+    width: 100%;
+    height: 180px;
+    perspective: 1000px;
+}
+
+.inner {
+    width: 100%;
+    height: 100%;
+    transition: 0.6s;
+    transform-style: preserve-3d;
+    position: relative;
+}
+
+.flip {
+    transform: rotateY(180deg);
+}
+
+.side {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: white;
+    color: #333;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.back {
+    transform: rotateY(180deg);
+}
+
+.chat {
+    background: white;
+    color: black;
+    height: 120px;
+    overflow-y: auto;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>💖 Love Game MAX 💖</h2>
+
+<input id="you" placeholder="Nama kamu">
+<input id="dia" placeholder="Nama dia">
+<button onclick="saveName()">Simpan Nama</button>
+
+<div id="names"></div>
+
+<select id="category">
+<option value="all">Semua</option>
+<option value="fun">Fun</option>
+<option value="deep">Deep</option>
+<option value="future">Future</option>
+<option value="challenge">Challenge</option>
+</select>
+
+<div id="turn">Giliran: -</div>
+<div id="score">Skor: 0 - 0</div>
+
+<div class="card" onclick="flipCard()">
+<div class="inner" id="inner">
+<div class="side">Klik 💌</div>
+<div class="side back" id="q"></div>
+</div>
+</div>
+
+<button onclick="draw()">Ambil Kartu</button>
+<button onclick="point()">+1 Poin</button>
+
+<input id="newQ" placeholder="Tambah pertanyaan...">
+<button onclick="addQ()">Tambah Pertanyaan</button>
+
+<h3>💬 Chat</h3>
+<div class="chat" id="chat"></div>
+<input id="msg" placeholder="Ketik pesan...">
+<button onclick="send()">Kirim</button>
+
+<br>
+<button onclick="music()">🎵 Music</button>
+
+<audio id="bgm" loop>
+<source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3">
+</audio>
+
+</div>
+
+<script>
+let turn = true;
+let s1 = 0, s2 = 0;
+
+let data = JSON.parse(localStorage.getItem("data")) || {
+fun:["Kalau aku jadi makanan?", "Julukan buat aku?"],
+deep:["Takut kehilangan aku?", "Arti cinta menurutmu?"],
+future:["5 tahun lagi kita?", "Mau tinggal dimana?"],
+challenge:["Sebut 3 hal kamu suka!", "Janji sekarang!"]
+};
+
+function saveName(){
+let y=document.getElementById("you").value;
+let d=document.getElementById("dia").value;
+localStorage.setItem("names",JSON.stringify({y,d}));
+showName();
+}
+
+function showName(){
+let n=JSON.parse(localStorage.getItem("names"));
+if(n) document.getElementById("names").innerText=n.y+" ❤️ "+n.d;
+}
+showName();
+
+function draw(){
+let cat=document.getElementById("category").value;
+let pool=[];
+
+if(cat=="all") pool=[...data.fun,...data.deep,...data.future,...data.challenge];
+else pool=data[cat];
+
+let r=Math.floor(Math.random()*pool.length);
+document.getElementById("q").innerText=pool[r];
+
+document.getElementById("inner").classList.add("flip");
+
+turn=!turn;
+let n=JSON.parse(localStorage.getItem("names"));
+let name=turn?n?.y||"Kamu":n?.d||"Dia";
+document.getElementById("turn").innerText="Giliran: "+name;
+}
+
+function flipCard(){
+document.getElementById("inner").classList.toggle("flip");
+}
+
+function point(){
+if(turn) s2++; else s1++;
+document.getElementById("score").innerText="Skor: "+s1+" - "+s2;
+}
+
+function addQ(){
+let val=document.getElementById("newQ").value;
+if(!val)return;
+data.fun.push(val);
+localStorage.setItem("data",JSON.stringify(data));
+document.getElementById("newQ").value="";
+}
+
+function send(){
+let m=document.getElementById("msg").value;
+if(!m)return;
+let chat=document.getElementById("chat");
+chat.innerHTML+="<div>"+m+"</div>";
+document.getElementById("msg").value="";
+chat.scrollTop=chat.scrollHeight;
+}
+
+function music(){
+let m=document.getElementById("bgm");
+if(m.paused)m.play(); else m.pause();
+}
+</script>
+
+</body>
+</html>
