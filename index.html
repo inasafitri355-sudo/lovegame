@@ -3,205 +3,219 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Love Game MAX 💖</title>
+<title>Love App 💖</title>
 
 <style>
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #ff6a88, #ff99ac);
     margin: 0;
-    padding: 20px;
-    text-align: center;
+    font-family: -apple-system, sans-serif;
+    background: linear-gradient(180deg,#ff9a9e,#fad0c4);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app {
+    max-width: 400px;
+    margin: auto;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     color: white;
 }
 
-.container {
-    max-width: 420px;
-    margin: auto;
+.header {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
 }
 
-input, select, button {
-    width: 90%;
-    padding: 10px;
-    margin: 5px;
-    border-radius: 12px;
+.card-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.card {
+    width: 85%;
+    height: 280px;
+    background: rgba(255,255,255,0.95);
+    color: #333;
+    border-radius: 25px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 18px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    transition: 0.4s;
+}
+
+.footer {
+    padding: 20px;
+}
+
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin: 5px 0;
+    border-radius: 15px;
     border: none;
 }
 
 button {
     background: #ff4d88;
     color: white;
+    font-size: 16px;
 }
 
-.card {
-    margin: 20px auto;
-    width: 100%;
-    height: 180px;
-    perspective: 1000px;
-}
-
-.inner {
-    width: 100%;
-    height: 100%;
-    transition: 0.6s;
-    transform-style: preserve-3d;
-    position: relative;
-}
-
-.flip {
-    transform: rotateY(180deg);
-}
-
-.side {
+/* 💕 HEART ANIMATION */
+.heart {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    background: white;
-    color: #333;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 15px;
+    font-size: 30px;
+    animation: float 1s ease-out forwards;
 }
 
-.back {
-    transform: rotateY(180deg);
-}
-
-.chat {
-    background: white;
-    color: black;
-    height: 120px;
-    overflow-y: auto;
-    border-radius: 10px;
-    padding: 10px;
-    text-align: left;
+@keyframes float {
+    0% {transform: translateY(0) scale(1); opacity: 1;}
+    100% {transform: translateY(-150px) scale(1.5); opacity: 0;}
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="app">
 
-<h2>💖 Love Game MAX 💖</h2>
+<div class="header" id="header">💖 Love App 💖</div>
 
+<div class="card-container" id="container">
+<div class="card" id="card">Tap / Swipe 💌</div>
+</div>
+
+<div class="footer">
 <input id="you" placeholder="Nama kamu">
 <input id="dia" placeholder="Nama dia">
-<button onclick="saveName()">Simpan Nama</button>
-
-<div id="names"></div>
-
-<select id="category">
-<option value="all">Semua</option>
-<option value="fun">Fun</option>
-<option value="deep">Deep</option>
-<option value="future">Future</option>
-<option value="challenge">Challenge</option>
-</select>
-
-<div id="turn">Giliran: -</div>
-<div id="score">Skor: 0 - 0</div>
-
-<div class="card" onclick="flipCard()">
-<div class="inner" id="inner">
-<div class="side">Klik 💌</div>
-<div class="side back" id="q"></div>
-</div>
+<button onclick="start()">Mulai</button>
+<button onclick="toggleMusic()">🎵 Music</button>
 </div>
 
-<button onclick="draw()">Ambil Kartu</button>
-<button onclick="point()">+1 Poin</button>
-
-<input id="newQ" placeholder="Tambah pertanyaan...">
-<button onclick="addQ()">Tambah Pertanyaan</button>
-
-<h3>💬 Chat</h3>
-<div class="chat" id="chat"></div>
-<input id="msg" placeholder="Ketik pesan...">
-<button onclick="send()">Kirim</button>
-
-<br>
-<button onclick="music()">🎵 Music</button>
-
+<!-- 🎵 MUSIC -->
 <audio id="bgm" loop>
-<source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3">
+<source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b9d7b.mp3">
+</audio>
+
+<!-- 🔊 SOUND EFFECT -->
+<audio id="sfx">
+<source src="https://cdn.pixabay.com/audio/2022/03/10/audio_0a3f6b9d0f.mp3">
 </audio>
 
 </div>
 
 <script>
 let turn = true;
-let s1 = 0, s2 = 0;
+let started = false;
 
-let data = JSON.parse(localStorage.getItem("data")) || {
-fun:["Kalau aku jadi makanan?", "Julukan buat aku?"],
-deep:["Takut kehilangan aku?", "Arti cinta menurutmu?"],
-future:["5 tahun lagi kita?", "Mau tinggal dimana?"],
-challenge:["Sebut 3 hal kamu suka!", "Janji sekarang!"]
-};
+let questions = [
+"Apa hal yang paling kamu suka dari aku?",
+"Kapan kamu paling kangen aku?",
+"Gimana masa depan kita?",
+"Apa yang bikin kamu bertahan sama aku?",
+"Apa mimpi kita bareng?",
+"Apa yang bikin kamu takut kehilangan aku?",
+"Deskripsikan aku dalam 1 kata",
+"Apa yang kamu harapkan dari hubungan ini?"
+];
 
-function saveName(){
+function start(){
 let y=document.getElementById("you").value;
 let d=document.getElementById("dia").value;
+
+if(!y||!d){
+alert("Isi nama dulu 😆");
+return;
+}
+
 localStorage.setItem("names",JSON.stringify({y,d}));
-showName();
+started=true;
+
+// autoplay fix (user interaction)
+document.getElementById("bgm").play().catch(()=>{});
+
+next();
 }
 
-function showName(){
+function next(){
+if(!started)return;
+
 let n=JSON.parse(localStorage.getItem("names"));
-if(n) document.getElementById("names").innerText=n.y+" ❤️ "+n.d;
-}
-showName();
+let name=turn?n.y:n.d;
 
-function draw(){
-let cat=document.getElementById("category").value;
-let pool=[];
+document.getElementById("header").innerText="Giliran: "+name;
 
-if(cat=="all") pool=[...data.fun,...data.deep,...data.future,...data.challenge];
-else pool=data[cat];
+let random=Math.floor(Math.random()*questions.length);
 
-let r=Math.floor(Math.random()*pool.length);
-document.getElementById("q").innerText=pool[r];
+let card=document.getElementById("card");
+card.style.transform="scale(0.8)";
+card.style.opacity="0";
 
-document.getElementById("inner").classList.add("flip");
+setTimeout(()=>{
+card.innerText=questions[random];
+card.style.transform="scale(1)";
+card.style.opacity="1";
+},200);
+
+// 🔊 SOUND
+let sfx=document.getElementById("sfx");
+sfx.currentTime=0;
+sfx.play();
+
+createHearts();
 
 turn=!turn;
-let n=JSON.parse(localStorage.getItem("names"));
-let name=turn?n?.y||"Kamu":n?.d||"Dia";
-document.getElementById("turn").innerText="Giliran: "+name;
 }
 
-function flipCard(){
-document.getElementById("inner").classList.toggle("flip");
+// 💕 HEART EFFECT
+function createHearts(){
+let container=document.getElementById("container");
+
+for(let i=0;i<6;i++){
+let heart=document.createElement("div");
+heart.className="heart";
+heart.innerText="💖";
+
+heart.style.left=Math.random()*80+"%";
+
+container.appendChild(heart);
+
+setTimeout(()=>heart.remove(),1000);
+}
 }
 
-function point(){
-if(turn) s2++; else s1++;
-document.getElementById("score").innerText="Skor: "+s1+" - "+s2;
-}
+// TAP
+document.getElementById("card").addEventListener("click", next);
 
-function addQ(){
-let val=document.getElementById("newQ").value;
-if(!val)return;
-data.fun.push(val);
-localStorage.setItem("data",JSON.stringify(data));
-document.getElementById("newQ").value="";
-}
+// SWIPE
+let startX=0;
+document.getElementById("card").addEventListener("touchstart", e=>{
+startX=e.touches[0].clientX;
+});
 
-function send(){
-let m=document.getElementById("msg").value;
-if(!m)return;
-let chat=document.getElementById("chat");
-chat.innerHTML+="<div>"+m+"</div>";
-document.getElementById("msg").value="";
-chat.scrollTop=chat.scrollHeight;
-}
+document.getElementById("card").addEventListener("touchend", e=>{
+let endX=e.changedTouches[0].clientX;
 
-function music(){
+if(Math.abs(endX-startX)>50){
+next();
+}
+});
+
+function toggleMusic(){
 let m=document.getElementById("bgm");
-if(m.paused)m.play(); else m.pause();
+if(m.paused)m.play();
+else m.pause();
 }
 </script>
 
