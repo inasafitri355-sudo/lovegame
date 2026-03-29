@@ -5,47 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Love Game 💖</title>
     <style>
-        :root { --pink: #ff4d88; --bg: #fad0c4; }
-        body { margin: 0; font-family: sans-serif; background: linear-gradient(135deg,#ff9a9e, var(--bg)); min-height: 100vh; display: flex; justify-content: center; }
+        :root { 
+            --pink: #ff4d88; --bg: #fad0c4; 
+            --fun: #ffeb3b; --deep: #9c27b0; --future: #4caf50; --challenge: #f44336;
+        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#ff9a9e, var(--bg)); min-height: 100vh; display: flex; justify-content: center; }
         .app { max-width: 400px; width: 100%; padding: 20px; text-align: center; }
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
-        .box { height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: rgba(255,255,255,0.4); border: 2px solid white; transition: 0.3s; }
-        .card { background: white; padding: 20px; border-radius: 20px; margin: 15px 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); min-height: 50px; font-weight: bold; }
-        button, input, select { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; font-size: 16px; }
-        button { background: var(--pink); color: white; font-weight: bold; cursor: pointer; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .chat { background: white; height: 100px; overflow-y: auto; text-align: left; font-size: 14px; margin-top: 15px; padding: 10px; border-radius: 10px; }
-        #score { font-size: 18px; font-weight: bold; color: white; margin: 10px 0; }
-        .dice-rolling { animation: shake 0.1s infinite; }
-        @keyframes shake { 0% {transform:rotate(0)} 50% {transform:rotate(5deg)} 100% {transform:rotate(0)} }
+        
+        /* Board Styling */
+        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
+        .box { 
+            height: 70px; border-radius: 15px; display: flex; align-items: center; 
+            justify-content: center; font-size: 24px; background: rgba(255,255,255,0.6); 
+            border: 3px solid white; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* Warna Kotak Berdasarkan Tipe */
+        .box.fun { border-color: var(--fun); }
+        .box.deep { border-color: var(--deep); }
+        .box.future { border-color: var(--future); }
+        .box.challenge { border-color: var(--challenge); }
+
+        .card { 
+            background: white; padding: 25px; border-radius: 20px; margin: 15px 0; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); min-height: 80px; 
+            font-weight: bold; font-size: 18px; color: #333; display: flex; align-items: center; justify-content: center;
+        }
+        
+        button, input, select { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 12px; font-size: 16px; outline: none; }
+        button { background: var(--pink); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0 #d6336c; }
+        button:active { transform: translateY(3px); box-shadow: 0 1px 0 #d6336c; }
+        button:disabled { background: #ccc; box-shadow: 0 4px 0 #999; cursor: not-allowed; }
+        
+        .chat { background: rgba(255,255,255,0.8); height: 120px; overflow-y: auto; text-align: left; font-size: 14px; margin-top: 15px; padding: 10px; border-radius: 12px; border: 1px solid #ddd; }
+        #score { font-size: 20px; font-weight: bold; color: white; text-shadow: 1px 1px 4px rgba(0,0,0,0.2); }
+        
+        /* Animasi Kocok Dadu */
+        .dice-rolling { animation: shake 0.15s infinite; }
+        @keyframes shake { 0% {transform: rotate(0) scale(1.1);} 50% {transform: rotate(10deg) scale(1.1);} 100% {transform: rotate(-10deg) scale(1.1);} }
     </style>
 </head>
 <body>
 
 <div class="app">
     <div id="setup">
-        <h2 style="color:white;">Lover's Game 💖</h2>
-        <input id="roomInput" placeholder="Kode Room (Bebas)">
+        <h1 style="color:white; margin-bottom:0;">Lover's Game 💖</h1>
+        <p style="color:white; margin-top:5px;">Main berdua makin romantis!</p>
+        <input id="roomInput" placeholder="Ketik Kode Room (Contoh: LDR2024)">
         <select id="playerInput">
-            <option value="p1">👤 Player 1</option>
-            <option value="p2">❤️ Player 2</option>
+            <option value="p1">👤 Player 1 (Aku)</option>
+            <option value="p2">❤️ Player 2 (Kamu)</option>
         </select>
-        <button onclick="initGame()">MASUK PERMAINAN</button>
+        <button onclick="initGame()">MULAI SEKARANG ✨</button>
     </div>
 
     <div id="gameArea" style="display:none;">
         <div id="score">Skor: 0 - 0</div>
         <div class="board" id="board"></div>
-        <div class="card" id="card">Klik Roll! 🎲</div>
-        <button id="rollBtn" onclick="rollDice()">ROLL DICE 🎲</button>
+        <div class="card" id="card">Siap main? Klik Roll! 🎲</div>
+        <button id="rollBtn" onclick="animateDice()">ROLL DICE 🎲</button>
+        
         <div class="chat" id="chat"></div>
-        <div style="display:flex; gap:5px;">
-            <input id="msg" placeholder="Chat..." style="margin:0">
-            <button onclick="sendMsg()" style="width:70px; margin:0">Kirim</button>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <input id="msg" placeholder="Kirim pesan sayang..." style="margin:0">
+            <button onclick="sendMsg()" style="width:80px; margin:0; padding:0;">Kirim</button>
         </div>
     </div>
 </div>
 
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com"></script>
 <script src="https://www.gstatic.com"></script>
 
@@ -54,9 +81,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyDy7sqCBGhtjcsITuT4hafOkL31bqM7OAs",
     authDomain: "lovegame-c55b0.firebaseapp.com",
     projectId: "lovegame-c55b0",
-    storageBucket: "lovegame-c55b0.firebasestorage.app",
     databaseURL: "https://lovegame-c55b0-default-rtdb.firebaseio.com",
-    messagingSenderId: "330187220059",
     appId: "1:330187220059:web:c8cfa1447114a4a63d8b7e"
 };
 
@@ -64,18 +89,40 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let roomID = "", myID = "", pos1 = 0, pos2 = 0, turn = "p1", s1 = 0, s2 = 0;
+
 const types = ["fun", "deep", "future", "challenge", "fun", "deep", "future", "challenge", "fun", "deep", "future", "challenge"];
-const questions = {
-    fun: "Apa hal termanis yang pernah aku lakuin?",
-    deep: "Apa ketakutan terbesar kamu dalam hubungan ini?",
-    future: "Kita nanti mau punya rumah warna apa?",
-    challenge: "Coba peluk layar HP kamu sekarang!"
+
+const questionList = {
+    fun: [
+        "Apa kesan pertama kamu pas pertama kali ketemu aku?",
+        "Kalau kita jadi hewan, kita jadi apa?",
+        "Sebutin 3 hal yang bikin kamu sayang banget sama aku!",
+        "Lagu apa yang paling ngingetin kamu ke aku?"
+    ],
+    deep: [
+        "Apa satu hal yang paling kamu takutin bakal berubah dari kita?",
+        "Kapan terakhir kali aku bikin kamu ngerasa bangga banget?",
+        "Apa luka masa lalu yang berhasil sembuh sejak ada aku?",
+        "Gimana cara terbaik aku buat nenangin kamu pas lagi sedih?"
+    ],
+    future: [
+        "Kita mau liburan kemana pas anniversary nanti?",
+        "Coba bayangin kita 5 tahun lagi, kita lagi ngapain ya?",
+        "Nanti kalau punya rumah, kamu mau ada ruangan apa yang khusus?",
+        "Sebutkan satu impian kamu yang pengen kita wujudin bareng!"
+    ],
+    challenge: [
+        "Cium layar HP kamu sekarang juga! 😘",
+        "Kirim foto muka jelek (pap) ke chat sekarang!",
+        "Voice note bilang 'I Love You' 5x dengan nada beda-beda!",
+        "Ganti status WA jadi nama aku selama 5 menit!"
+    ]
 };
 
 function initGame() {
     roomID = document.getElementById("roomInput").value.trim();
     myID = document.getElementById("playerInput").value;
-    if (!roomID) return alert("Isi kode room!");
+    if (!roomID) return alert("Isi kode room dulu ya!");
 
     document.getElementById("setup").style.display = "none";
     document.getElementById("gameArea").style.display = "block";
@@ -86,15 +133,18 @@ function initGame() {
             pos1 = d.pos1 || 0; pos2 = d.pos2 || 0;
             turn = d.turn || "p1"; s1 = d.s1 || 0; s2 = d.s2 || 0;
             updateUI();
+            if(d.lastQ) document.getElementById("card").innerText = d.lastQ;
         } else {
-            db.ref("rooms/" + roomID).set({ pos1:0, pos2:0, turn:"p1", s1:0, s2:0 });
+            db.ref("rooms/" + roomID).set({ pos1:0, pos2:0, turn:"p1", s1:0, s2:0, lastQ: "Ayo mulai!" });
         }
     });
 
-    db.ref("chat/" + roomID).limitToLast(10).on("child_added", snap => {
+    db.ref("chat/" + roomID).limitToLast(15).on("child_added", snap => {
         const m = snap.val();
-        document.getElementById("chat").innerHTML += `<div><b>${m.p}:</b> ${m.txt}</div>`;
-        document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+        const chatBox = document.getElementById("chat");
+        const sender = m.p === "p1" ? "👤" : "❤️";
+        chatBox.innerHTML += `<div><b>${sender}:</b> ${m.txt}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
     });
 }
 
@@ -109,42 +159,52 @@ function updateUI() {
         if (i === pos2) div.innerHTML += "❤️";
         b.appendChild(div);
     }
-    document.getElementById("rollBtn").disabled = (myID !== turn);
+    const isMyTurn = (myID === turn);
+    document.getElementById("rollBtn").disabled = !isMyTurn;
+    document.getElementById("rollBtn").innerText = isMyTurn ? "ROLL DICE 🎲" : "Giliran Pasanganmu...";
 }
 
-function rollDice() {
+function animateDice() {
     const btn = document.getElementById("rollBtn");
     btn.classList.add("dice-rolling");
     let count = 0;
     let anim = setInterval(() => {
         document.getElementById("card").innerText = "🎲 " + (Math.floor(Math.random() * 6) + 1);
-        if (count++ > 10) {
+        if (count++ > 12) {
             clearInterval(anim);
             btn.classList.remove("dice-rolling");
-            let dice = Math.floor(Math.random() * 6) + 1;
-            document.getElementById("card").innerText = "HASIL: " + dice;
-            setTimeout(() => moveStep(dice), 500);
+            processMove();
         }
     }, 100);
 }
 
-function moveStep(steps) {
-    let current = 0;
-    let moveInterval = setInterval(() => {
-        if (turn === "p1") pos1 = (pos1 + 1) % 12; else pos2 = (pos2 + 1) % 12;
-        updateUI();
-        if (++current >= steps) {
-            clearInterval(moveInterval);
-            const currentPos = (turn === "p1") ? pos1 : pos2;
-            document.getElementById("card").innerText = questions[types[currentPos]];
-            db.ref("rooms/" + roomID).update({
-                pos1: pos1, pos2: pos2,
-                turn: (turn === "p1" ? "p2" : "p1"),
-                s1: (turn === "p1" ? s1 + 1 : s1),
-                s2: (turn === "p2" ? s2 + 1 : s2)
-            });
-        }
-    }, 300);
+function processMove() {
+    const dice = Math.floor(Math.random() * 6) + 1;
+    let newPos;
+    if (myID === "p1") {
+        newPos = (pos1 + dice) % 12;
+    } else {
+        newPos = (pos2 + dice) % 12;
+    }
+
+    const type = types[newPos];
+    const pool = questionList[type];
+    const randomQ = pool[Math.floor(Math.random() * pool.length)];
+
+    const updates = { 
+        turn: (myID === "p1" ? "p2" : "p1"),
+        lastQ: `[Dadu: ${dice}] \n ${randomQ}` 
+    };
+
+    if (myID === "p1") {
+        updates.pos1 = newPos;
+        updates.s1 = s1 + 1;
+    } else {
+        updates.pos2 = newPos;
+        updates.s2 = s2 + 1;
+    }
+
+    db.ref("rooms/" + roomID).update(updates);
 }
 
 function sendMsg() {
